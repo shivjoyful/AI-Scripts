@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline Event ID Ready Reckoner</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { max-width: 900px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+        h1, h2 { color: #0056b3; }
+        input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .category-section {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+        .category-section:last-child {
+            border-bottom: none;
+        }
+        .event-item {
+            background: #eef7ff;
+            border: 1px solid #d0e7ff;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            word-wrap: break-word; /* Ensure long descriptions wrap */
+        }
+        .event-item strong { color: #0056b3; }
+        .event-item small { display: block; margin-top: 5px; color: #666; font-size: 0.9em; }
+        .no-results {
+            color: #cc0000;
+            font-weight: bold;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Offline Event ID Ready Reckoner</h1>
+        <p>A curated list of critical Event IDs for Active Directory, ADFS, AAD Connect, DFS Replication, Workstations, Group Policy and common Network issues.</p>
+        <input type="text" id="searchInput" onkeyup="filterEvents()" placeholder="Search Event ID, description, or category...">
+
+        <div id="eventsContainer">
+            <!-- Event categories will be rendered here by JavaScript -->
+        </div>
+
+        <p><em>**Note:** This is a curated list of frequently encountered and critical Event IDs, not an exhaustive encyclopedia. Event IDs can vary slightly or new ones can appear with different Windows versions and updates. Always refer to official Microsoft documentation for the most precise details for your specific environment.</em></p>
+    </div>
+
+    <script>
+        const eventData = {
+            "Active Directory (AD) - User, Group, Object Management": [
+                { ids: "5137", description: "A directory service object was created. (General AD object creation)", log_source: "Security" },
+                { ids: "4720", description: "A user account was created.", log_source: "Security" },
+                { ids: "4727", description: "A security-enabled global group was created.", log_source: "Security" },
+                { ids: "4731", description: "A security-enabled local group was created.", log_source: "Security" },
+                { ids: "4754", description: "A security-enabled universal group was created.", log_source: "Security" },
+                { ids: "5136", description: "A directory service object was modified. (General AD object modification, details in event)", log_source: "Security" },
+                { ids: "4738", description: "A user account was changed.", log_source: "Security" },
+                { ids: "4728, 4732, 4755", description: "A member was added to a group (global, local, universal respectively).", log_source: "Security" },
+                { ids: "4729, 4733, 4756", description: "A member was removed from a group (global, local, universal respectively).", log_source: "Security" },
+                { ids: "4767", description: "A user account was unlocked.", log_source: "Security" },
+                { ids: "4781", description: "The name of an account was changed.", log_source: "Security" },
+                { ids: "5141, 4660", description: "A directory service object was deleted (general, 4660 often paired with 4663 for object name).", log_source: "Security" },
+                { ids: "4726", description: "A user account was deleted.", log_source: "Security" },
+                { ids: "4730, 4734, 4758", description: "A group was deleted (global, local, universal respectively).", log_source: "Security" },
+                { ids: "4740", description: "A user account was locked out.", log_source: "Security" },
+                { ids: "4776", description: "The domain controller attempted to validate the credentials for an account.", log_source: "Security" },
+                { ids: "4472, 4773", description: "Kerberos ticket requests (success/failure).", log_source: "Security" },
+                { ids: "4778, 4779", description: "A session was reconnected to or disconnected from a Windows workstation.", log_source: "Security" },
+                { ids: "4742", description: "A computer account was changed.", log_source: "Security" },
+                { ids: "4741", description: "A computer account was created.", log_source: "Security" },
+                { ids: "4743", description: "A computer account was deleted.", log_source: "Security" },
+                { ids: "4750", description: "A security-enabled local group was created (on local machine).", log_source: "Security" },
+                { ids: "4751", description: "A member was added to a security-enabled local group (on local machine).", log_source: "Security" },
+                { ids: "4752", description: "A member was removed from a security-enabled local group (on local machine).", log_source: "Security" },
+                { ids: "4753", description: "A security-enabled local group was deleted (on local machine).", log_source: "Security" },
+                { ids: "4760", description: "A user was enabled.", log_source: "Security" },
+                { ids: "4761", description: "A user was disabled.", log_source: "Security" },
+                { ids: "4763", description: "A Kerberos service ticket was granted.", log_source: "Security" },
+                { ids: "4764", description: "A Kerberos service ticket was denied.", log_source: "Security" },
+                { ids: "4768", description: "A Kerberos authentication ticket (TGT) was requested.", log_source: "Security" },
+                { ids: "4769", description: "A Kerberos service ticket was requested.", log_source: "Security" },
+                { ids: "4770", description: "A Kerberos service ticket was renewed.", log_source: "Security" },
+                { ids: "4771", description: "Kerberos pre-authentication failed.", log_source: "Security" },
+                { ids: "4774", description: "An account was logged on (successful network logon).", log_source: "Security" },
+                { ids: "4775", description: "An account was logged off (network logoff).", log_source: "Security" }
+            ],
+            "Active Directory Federation Services (ADFS) - Authentication & Service Health": [
+                { ids: "1200", description: "A request where the Federation Service issues a security token successfully.", log_source: "AD FS / Admin" },
+                { ids: "1201", description: "A request where the security token issuance failed on the Federation Service.", log_source: "AD FS / Admin" },
+                { ids: "1203", description: "A request where fresh credential validation failed on the Federation Service.", log_source: "AD FS / Admin" },
+                { ids: "364", description: "An error occurred during an attempt to build the trust chain for a token (often certificate issues).", log_source: "AD FS / Admin" },
+                { ids: "411, 413", description: "Token validation failed or error during token request processing.", log_source: "AD FS / Admin" },
+                { ids: "500", description: "General critical error (check accompanying events).", log_source: "AD FS / Admin" },
+                { ids: "324", description: "The Federation Service could not authorize token issuance for a caller to a relying party.", log_source: "AD FS / Admin" },
+                { ids: "102", description: "The Federation Service could not connect to the AD FS configuration database.", log_source: "AD FS / Admin" },
+                { ids: "1204", description: "Federation Service successfully processed a password change request.", log_source: "AD FS / Admin" },
+                { ids: "250", description: "The Federation Service issued a token to a relying party.", log_source: "AD FS / Admin" },
+                { ids: "251", description: "The Federation Service rejected a token request to a relying party.", log_source: "AD FS / Admin" },
+                { ids: "276", description: "The Federation Service encountered an error when processing a sign-in request.", log_source: "AD FS / Admin" }
+            ],
+            "Azure Active Directory Connect (AAD Connect) - Synchronization & Service": [
+                { ids: "106, 109", description: "Connectivity errors when communicating with Azure AD (credential, network, proxy issues).", log_source: "Application (Directory Synchronization / ADSync)" },
+                { ids: "6801", description: "Error occurred communicating with Azure AD.", log_source: "Application (Directory Synchronization / ADSync)" },
+                { ids: "6803", description: "Generic error during the Export step.", log_source: "Application (Directory Synchronization / ADSync)" },
+                { ids: "6941", description: "Export encountered specific errors (e.g., DataValidationFailed, InvalidSoftMatch).", log_source: "Application (Directory Synchronization / ADSync)" },
+                { ids: "7038", description: "The ADSync service was unable to log on (incorrect password).", log_source: "System / Application" },
+                { ids: "6201", description: "Server encryption keys successfully created (AAD Connect installation).", log_source: "Application (Directory Synchronization / ADSync)" },
+                { ids: "7000, 7031", description: "Service Control Manager events for ADSync service start/stop.", log_source: "System" },
+                { ids: "6000", description: "Synchronization Service encountered an error during import or export.", log_source: "Application (Directory Synchronization / ADSync)" },
+                { ids: "6002", description: "Synchronization Service encountered an error during a delta synchronization cycle.", log_source: "Application (Directory Synchronization / ADSync)" },
+                { ids: "6003", description: "Synchronization Service encountered an error during a full synchronization cycle.", log_source: "Application (Directory Synchronization / ADSync)" }
+            ],
+            "Azure Active Directory Connect - Password Hash Synchronization (PHS)": [
+                { ids: "656", description: "Password hash synchronization successful for a user.", log_source: "Application (Directory Synchronization / ADSync)" },
+                { ids: "657", description: "Password hash synchronization failed for a user.", log_source: "Application (Directory Synchronization / ADSync)" },
+                { ids: "611", description: "Password Synchronization cycle started.", log_source: "Application (Directory Synchronization / ADSync)" },
+                { ids: "650", description: "Password Hash Synchronization - Initial full synchronization started.", log_source: "Application (Directory Synchronization / ADSync)" },
+                { ids: "651", description: "Password Hash Synchronization - Initial full synchronization completed.", log_source: "Application (Directory Synchronization / ADSync)" },
+                { ids: "661", description: "Password Synchronization for all users stopped.", log_source: "Application (Directory Synchronization / ADSync)" },
+                { ids: "904", description: "Password hash synchronization encountered an error communicating with Azure AD.", log_source: "Application (Directory Synchronization / ADSync)" },
+                { ids: "905", description: "Password hash synchronization encountered an unexpected error.", log_source: "Application (Directory Synchronization / ADSync)" }
+            ],
+            "Azure Active Directory Connect - Password Writeback": [
+                { ids: "31000", description: "Password writeback successful.", log_source: "Azure AD Pass-through Authentication / Admin (or ADSync)" },
+                { ids: "31001", description: "Password writeback failed.", log_source: "Azure AD Pass-through Authentication / Admin (or ADSync)" },
+                { ids: "31003", description: "Password writeback service start/stop related event.", log_source: "Azure AD Pass-through Authentication / Admin (or ADSync)" },
+                { ids: "6944", description: "Password writeback error during export to on-premises AD.", log_source: "Application (Directory Synchronization / ADSync)" },
+                { ids: "658", description: "AAD Sync: Password Writeback encountered an issue when processing a password change.", log_source: "Application (Directory Synchronization / ADSync)" },
+                { ids: "906", description: "Password Writeback service failed to communicate with Azure AD.", log_source: "Application (Directory Synchronization / ADSync)" }
+            ],
+            "Distributed File System (DFS) Replication - Health & Errors": [
+                { ids: "4012", description: "DFS Replication service stopped replication because replicated folder offline too long (data stale). Critical!", log_source: "DFS Replication" },
+                { ids: "2212, 2214", description: "DFS Replication service stopped (2212) and successfully recovered (2214). Normal if paired; 2212 alone is a problem.", log_source: "DFS Replication" },
+                { ids: "5002", description: "DFS Replication service unable to set up RPC binding to communicate with a partner (firewall, DNS, network).", log_source: "DFS Replication" },
+                { ids: "1202", description: "DFS Replication service could not contact the domain controller for config.", log_source: "DFS Replication" },
+                { ids: "4202, 4204", description: "Staging area issues (too small or not cleaned up efficiently).", log_source: "DFS Replication" },
+                { ids: "13511, 13522", description: "DFS Replication database issues due to disk space.", log_source: "DFS Replication" },
+                { ids: "4102", description: "The DFS Replication service encountered an error and cannot replicate with a partner.", log_source: "DFS Replication" },
+                { ids: "4104", description: "The DFS Replication service detected that the replicated folder has been removed or modified.", log_source: "DFS Replication" },
+                { ids: "4114", description: "The DFS Replication service detected that the replicated folder has been taken offline.", log_source: "DFS Replication" },
+                { ids: "5008", description: "The DFS Replication service failed to communicate with a partner for replication.", log_source: "DFS Replication" },
+                { ids: "5012", description: "The DFS Replication service stopped replication on a replicated folder due to an error.", log_source: "DFS Replication" },
+                { ids: "6002", description: "The DFS Replication service has been waiting to finish synchronization of replicated folder for an extended period.", log_source: "DFS Replication" }
+            ],
+            "Group Policy Management & Processing": [
+                { ids: "4016", description: "Group Policy processing succeeded.", log_source: "System (GroupPolicy)" },
+                { ids: "4017", description: "Group Policy processing failed.", log_source: "System (GroupPolicy)" },
+                { ids: "4018", description: "Group Policy processing started.", log_source: "System (GroupPolicy)" },
+                { ids: "4015", description: "Group Policy processing errors (e.g., network issues, permissions).", log_source: "System (GroupPolicy)" },
+                { ids: "1030", description: "Windows cannot process Group Policy objects. This may be due to a slow network or DNS issues.", log_source: "System (GroupPolicy)" },
+                { ids: "1053", description: "Windows cannot determine the user or computer name (DNS/network issue).", log_source: "System (GroupPolicy)" },
+                { ids: "1054", description: "Windows cannot obtain the name of the domain controller.", log_source: "System (GroupPolicy)" },
+                { ids: "1058", description: "Windows cannot access the file gpt.ini for GPO (permissions, network path).", log_source: "System (GroupPolicy)" },
+                { ids: "1085", description: "Windows cannot apply the Group Policy for user/computer. This might be due to a previous failure.", log_source: "System (GroupPolicy)" },
+                { ids: "1096", description: "The computer failed to apply the Group Policy settings.", log_source: "System (GroupPolicy)" },
+                { ids: "500", description: "Folder Redirection policy applied successfully.", log_source: "Application (Folder Redirection)" },
+                { ids: "501", description: "Folder Redirection policy failed to apply.", log_source: "Application (Folder Redirection)" },
+                { ids: "8194", description: "Volume Shadow Copy Service (VSS) errors often seen with Group Policy (backup/restore issues).", log_source: "System (VSS)" }
+            ],
+            "Workstation Events - System, Application, Security, Network": [
+                { ids: "7000, 7001, 7002, 7003, 7005, 7006, 7009, 7010, 7011, 7016, 7017, 7018, 7022, 7023, 7024, 7026, 7031, 7032, 7034, 7036, 7040, 7041, 7042, 7043, 7044, 7045, 7046, 7047, 7048, 7049, 7050", description: "Service Control Manager events (Service Start/Stop/Errors - a broad range).", log_source: "System" },
+                { ids: "6005, 6006", description: "The Event Log service was started (6005) or stopped (6006).", log_source: "System" },
+                { ids: "6008", description: "The previous system shutdown was unexpected.", log_source: "System" },
+                { ids: "1000", description: "Application Error (crash) - check details for faulting module.", log_source: "Application" },
+                { ids: "1001", description: "Application Hang (not responding) or Error Reporting.", log_source: "Application" },
+                { ids: "100", description: "Application-specific errors/warnings (Source: General, often tied to a specific app).", log_source: "Application" },
+                { ids: "4624", description: "An account was successfully logged on.", log_source: "Security" },
+                { ids: "4625", description: "An account failed to log on (check status and sub status codes for reason).", log_source: "Security" },
+                { ids: "4634", description: "An account was logged off.", log_source: "Security" },
+                { ids: "4647", description: "User initiated logoff.", log_source: "Security" },
+                { ids: "4672", description: "Special privileges assigned to new logon (e.g., Administrator token).", log_source: "Security" },
+                { ids: "4776", description: "The domain controller attempted to validate the credentials for an account (local security).", log_source: "Security" },
+                { ids: "4800, 4801, 4802, 4803", description: "Workstation locked (4800), unlocked (4801), screen saver invoked (4802), screen saver dismissed (4803).", log_source: "Security" },
+                { ids: "1000", description: "Microsoft-Windows-DHCP Client errors (e.g., failed to obtain an IP address).", log_source: "System" },
+                { ids: "1001, 1002, 1003", description: "Microsoft-Windows-NetworkProfile events (network connectivity changes).", log_source: "System" },
+                { ids: "1014", description: "Name resolution for the name [name] timed out after none of the configured DNS servers responded.", log_source: "System (DNS Client Events)" },
+                { ids: "4200, 4201", description: "DNS Client events indicating issues with DNS resolution or registration.", log_source: "System (DNS Client Events)" },
+                { ids: "40961", description: "DNS client registration failed for adapter.", log_source: "System (DNS Client Events)" },
+                { ids: "40962", description: "The system failed to register host (A or AAAA) resource records for network adapter with DNS server.", log_source: "System (DNS Client Events)" },
+                { ids: "4199", description: "The IP address lease for the Network Card with network address [MAC Address] has been denied by the DHCP server.", log_source: "System (DHCP-Client)" }
+            ],
+            "Network-Related Events (Packet Capture Context)": [
+                { ids: "1014", description: "Name resolution for a specific name timed out after no configured DNS servers responded (DNS issue).", log_source: "System (DNS Client)" },
+                { ids: "40961", description: "DNS client registration failed for network adapter.", log_source: "System (DNS Client)" },
+                { ids: "40962", description: "System failed to register host (A or AAAA) records for network adapter with DNS server.", log_source: "System (DNS Client)" },
+                { ids: "1000", description: "DHCP Client failed to obtain an IP address (no DHCP server response, incorrect config).", log_source: "System (DHCP Client)" },
+                { ids: "4199", description: "IP address lease for network card denied by DHCP server (MAC filtering, exhaustion).", log_source: "System (DHCP Client)" },
+                { ids: "7000, 7001", description: "Service Control Manager events related to network services (e.g., Netlogon, DNS Client, Workstation service failed to start).", log_source: "System" },
+                { ids: "16945", description: "Windows detected an IP address conflict (ARP conflict).", log_source: "System (Tcpip)" },
+                { ids: "4226", description: "TCP/IP has reached the security limit imposed on the number of concurrent TCP connect attempts (DDoS, worm, or misconfigured application).", log_source: "System (Tcpip)" },
+                { ids: "4201", description: "The system could not register the DNS records for network adapter.", log_source: "System (DNS Client)" },
+                { ids: "15002", description: "HTTP event log entries (errors with IIS, web applications, or proxy issues).", log_source: "System (HTTP Event Log)" },
+                { ids: "1125, 1126", description: "NTP client/server synchronization issues (Time service).", log_source: "System (Time-Service)" }
+            ]
+        };
+
+        function renderEvents(data) {
+            const container = document.getElementById('eventsContainer');
+            container.innerHTML = ''; // Clear previous content
+
+            let hasResults = false;
+
+            for (const category in data) {
+                const events = data[category];
+                if (events.length > 0) {
+                    hasResults = true;
+                    const categorySection = document.createElement('div');
+                    categorySection.className = 'category-section';
+                    categorySection.innerHTML = `<h2>${category}</h2>`;
+
+                    events.forEach(event => {
+                        const eventItem = document.createElement('div');
+                        eventItem.className = 'event-item';
+                        eventItem.innerHTML = `
+                            <strong>Event ID(s):</strong> ${event.ids}<br>
+                            ${event.description}<br>
+                            <small><strong>Log Source:</strong> ${event.log_source}</small>
+                        `;
+                        categorySection.appendChild(eventItem);
+                    });
+                    container.appendChild(categorySection);
+                }
+            }
+
+            if (!hasResults) {
+                container.innerHTML = '<div class="no-results">No events found matching your search.</div>';
+            }
+        }
+
+        function filterEvents() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            const filteredData = {};
+
+            for (const category in eventData) {
+                const events = eventData[category];
+                const filteredCategoryEvents = events.filter(event => {
+                    const idsMatch = event.ids.toLowerCase().includes(searchText);
+                    const descriptionMatch = event.description.toLowerCase().includes(searchText);
+                    const logSourceMatch = event.log_source.toLowerCase().includes(searchText);
+                    return idsMatch || descriptionMatch || logSourceMatch;
+                });
+
+                // Only add category to filteredData if it has matching events OR if the category name itself matches
+                if (filteredCategoryEvents.length > 0 || category.toLowerCase().includes(searchText)) {
+                    filteredData[category] = filteredCategoryEvents;
+                }
+            }
+            renderEvents(filteredData);
+        }
+
+        // Initial render when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            renderEvents(eventData);
+        });
+
+    </script>
+</body>
+</html>
